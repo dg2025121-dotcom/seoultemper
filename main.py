@@ -61,6 +61,66 @@ st.markdown(
 )
 st.markdown(f"**상관계수 (r):** {r_value:.4f}")
 
+# 100년당 상승폭 (전체 기간)
+slope_per_100_full = slope * 100
+
+# 최근 20년 기울기 계산 (자료가 20개 미만이면 있는 만큼 사용)
+recent_n = min(20, n_years)
+recent = yearly.tail(recent_n)
+recent_years = recent["연도"].values.astype(float)
+recent_temps = recent["평균기온"].values.astype(float)
+
+if recent_n >= 2:
+    slope_recent, intercept_recent, r_recent, p_recent, se_recent = stats.linregress(
+        recent_years, recent_temps
+    )
+    slope_per_100_recent = slope_recent * 100
+else:
+    slope_recent = None
+    slope_per_100_recent = None
+
+st.markdown(
+    f"""
+    <div style='text-align:center; padding: 10px 0 0 0;'>
+        <span style='font-size:18px; color:gray;'>전체 기간 기준 상승률</span><br>
+        <span style='font-size:48px; font-weight:bold; color:#457b9d;'>100년에 {slope_per_100_full:+.2f}°C</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.divider()
+st.markdown("#### 전체 기간 vs 최근 20년 기울기 비교")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(
+        f"""
+        <div style='text-align:center; padding: 10px; border-radius:10px; background-color:#f1faee;'>
+            <span style='font-size:16px; color:gray;'>전체 기간 ({start_year}~{end_year}년, {n_years}개년)</span><br>
+            <span style='font-size:32px; font-weight:bold; color:#457b9d;'>100년에 {slope_per_100_full:+.2f}°C</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with col2:
+    if slope_per_100_recent is not None:
+        recent_start = int(recent["연도"].min())
+        recent_end = int(recent["연도"].max())
+        st.markdown(
+            f"""
+            <div style='text-align:center; padding: 10px; border-radius:10px; background-color:#ffe8d6;'>
+                <span style='font-size:16px; color:gray;'>최근 {recent_n}년 ({recent_start}~{recent_end}년)</span><br>
+                <span style='font-size:32px; font-weight:bold; color:#e76f51;'>100년에 {slope_per_100_recent:+.2f}°C</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.info("최근 구간 기울기를 계산하기에 데이터가 부족합니다.")
+
 st.divider()
 
 selected_year = st.slider("연도를 선택하세요", min_value=1900, max_value=2100, value=2025, step=1)
